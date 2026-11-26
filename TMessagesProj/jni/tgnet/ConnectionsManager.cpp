@@ -1838,17 +1838,25 @@ uint8_t ConnectionsManager::getIpStratagy() {
 }
 
 void ConnectionsManager::initDatacenters() {
-    Datacenter *datacenter;
     // SumeGram: every DC (production and test) points to the same custom endpoint
     const uint32_t dcIds[] = {1, 2, 3, 4, 5};
     const uint32_t dcCount = testBackend ? 3 : 5;
     for (uint32_t a = 0; a < dcCount; a++) {
         uint32_t dcId = dcIds[a];
-        if (datacenters.find(dcId) == datacenters.end()) {
+        auto iter = datacenters.find(dcId);
+        Datacenter *datacenter = iter == datacenters.end() ? nullptr : iter->second;
+        if (datacenter == nullptr) {
             datacenter = new Datacenter(instanceNum, dcId);
-            datacenter->addAddressAndPort(SUME_DC_IP, SUME_DC_PORT, 0, "");
             datacenters[dcId] = datacenter;
         }
+        std::vector<TcpAddress> addresses;
+        addresses.emplace_back(SUME_DC_IP, SUME_DC_PORT, 0, "");
+        datacenter->replaceAddresses(addresses, 0);
+        std::vector<TcpAddress> empty;
+        datacenter->replaceAddresses(empty, 1);
+        datacenter->replaceAddresses(empty, 2);
+        datacenter->replaceAddresses(empty, 3);
+        datacenter->resetAddressAndPortNum();
     }
 }
 
