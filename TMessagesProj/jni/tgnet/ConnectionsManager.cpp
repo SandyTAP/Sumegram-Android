@@ -46,6 +46,10 @@ jmethodID jclass_ByteBuffer_allocateDirect = nullptr;
 static bool done = false;
 static constexpr int32_t MAX_CAPTCHA_CHECKS = 5;
 
+// SumeGram: single datacenter endpoint used for all DCs
+static const char *SUME_DC_IP = "2.27.98.189";
+static constexpr uint32_t SUME_DC_PORT = 2398;
+
 ConnectionsManager::ConnectionsManager(int32_t instance) {
     instanceNum = instance;
     if ((epolFd = epoll_create(128)) == -1) {
@@ -1835,62 +1839,15 @@ uint8_t ConnectionsManager::getIpStratagy() {
 
 void ConnectionsManager::initDatacenters() {
     Datacenter *datacenter;
-    if (!testBackend) {
-        if (datacenters.find(1) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 1);
-            datacenter->addAddressAndPort("149.154.175.50", 443, 0, "");
-            datacenter->addAddressAndPort("2001:b28:f23d:f001:0000:0000:0000:000a", 443, 1, "");
-            datacenters[1] = datacenter;
-        }
-
-        if (datacenters.find(2) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 2);
-            datacenter->addAddressAndPort("149.154.167.51", 443, 0, "");
-            datacenter->addAddressAndPort("95.161.76.100", 443, 0, "");
-            datacenter->addAddressAndPort("2001:67c:4e8:f002:0000:0000:0000:000a", 443, 1, "");
-            datacenters[2] = datacenter;
-        }
-
-        if (datacenters.find(3) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 3);
-            datacenter->addAddressAndPort("149.154.175.100", 443, 0, "");
-            datacenter->addAddressAndPort("2001:b28:f23d:f003:0000:0000:0000:000a", 443, 1, "");
-            datacenters[3] = datacenter;
-        }
-
-        if (datacenters.find(4) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 4);
-            datacenter->addAddressAndPort("149.154.167.91", 443, 0, "");
-            datacenter->addAddressAndPort("2001:67c:4e8:f004:0000:0000:0000:000a", 443, 1, "");
-            datacenters[4] = datacenter;
-        }
-
-        if (datacenters.find(5) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 5);
-            datacenter->addAddressAndPort("149.154.171.5", 443, 0, "");
-            datacenter->addAddressAndPort("2001:b28:f23f:f005:0000:0000:0000:000a", 443, 1, "");
-            datacenters[5] = datacenter;
-        }
-    } else {
-        if (datacenters.find(1) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 1);
-            datacenter->addAddressAndPort("149.154.175.40", 443, 0, "");
-            datacenter->addAddressAndPort("2001:b28:f23d:f001:0000:0000:0000:000e", 443, 1, "");
-            datacenters[1] = datacenter;
-        }
-
-        if (datacenters.find(2) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 2);
-            datacenter->addAddressAndPort("149.154.167.40", 443, 0, "");
-            datacenter->addAddressAndPort("2001:67c:4e8:f002:0000:0000:0000:000e", 443, 1, "");
-            datacenters[2] = datacenter;
-        }
-
-        if (datacenters.find(3) == datacenters.end()) {
-            datacenter = new Datacenter(instanceNum, 3);
-            datacenter->addAddressAndPort("149.154.175.117", 443, 0, "");
-            datacenter->addAddressAndPort("2001:b28:f23d:f003:0000:0000:0000:000e", 443, 1, "");
-            datacenters[3] = datacenter;
+    // SumeGram: every DC (production and test) points to the same custom endpoint
+    const uint32_t dcIds[] = {1, 2, 3, 4, 5};
+    const uint32_t dcCount = testBackend ? 3 : 5;
+    for (uint32_t a = 0; a < dcCount; a++) {
+        uint32_t dcId = dcIds[a];
+        if (datacenters.find(dcId) == datacenters.end()) {
+            datacenter = new Datacenter(instanceNum, dcId);
+            datacenter->addAddressAndPort(SUME_DC_IP, SUME_DC_PORT, 0, "");
+            datacenters[dcId] = datacenter;
         }
     }
 }
@@ -3448,6 +3405,12 @@ void ConnectionsManager::updateDcSettings(uint32_t dcNum, bool workaround, bool 
                 bool forceTryIpV6;
 
                 void addAddressAndPort(TL_dcOption *dcOption) {
+                    // SumeGram: always connect to our own datacenter endpoint
+                    if (dcOption->ipv6 || dcOption->cdn) {
+                        return;
+                    }
+                    std::string endpointIp = SUME_DC_IP;
+                    uint32_t endpointPort = SUME_DC_PORT;
                     std::vector<TcpAddress> *addresses;
                     if (!isCdn) {
                         isCdn = dcOption->cdn;
@@ -3467,7 +3430,7 @@ void ConnectionsManager::updateDcSettings(uint32_t dcNum, bool workaround, bool 
                         }
                     }
                     for (auto & addresse : *addresses) {
-                        if (addresse.address == dcOption->ip_address && addresse.port == dcOption->port) {
+                        if (addresse.address == endpointIp && addresse.port == endpointPort) {
                             return;
                         }
                     }
@@ -3475,11 +3438,11 @@ void ConnectionsManager::updateDcSettings(uint32_t dcNum, bool workaround, bool 
                     if (dcOption->secret != nullptr) {
                         secret = std::string((const char *) dcOption->secret->bytes, dcOption->secret->length);
                     }
-                    if (LOGS_ENABLED) DEBUG_D("getConfig add %s:%d to dc%d, flags %d, has_secret = %d[%d], try_this_port_only = %d, force_try_ipv6 = %d", dcOption->ip_address.c_str(), dcOption->port, dcOption->id, dcOption->flags, dcOption->secret != nullptr ? 1 : 0, dcOption->secret != nullptr ? dcOption->secret->length : 0, dcOption->thisPortOnly ? 1 : 0, dcOption->force_try_ipv6 ? 1 : 0);
+                    if (LOGS_ENABLED) DEBUG_D("getConfig add %s:%d to dc%d, flags %d, has_secret = %d[%d], try_this_port_only = %d, force_try_ipv6 = %d", endpointIp.c_str(), endpointPort, dcOption->id, dcOption->flags, dcOption->secret != nullptr ? 1 : 0, dcOption->secret != nullptr ? dcOption->secret->length : 0, dcOption->thisPortOnly ? 1 : 0, dcOption->force_try_ipv6 ? 1 : 0);
                     if (dcOption->thisPortOnly) {
-                        addresses->insert(addresses->begin(), TcpAddress(dcOption->ip_address, dcOption->port, dcOption->flags, secret));
+                        addresses->insert(addresses->begin(), TcpAddress(endpointIp, endpointPort, dcOption->flags, secret));
                     } else {
-                        addresses->push_back(TcpAddress(dcOption->ip_address, dcOption->port, dcOption->flags, secret));
+                        addresses->push_back(TcpAddress(endpointIp, endpointPort, dcOption->flags, secret));
                     }
 
                 }

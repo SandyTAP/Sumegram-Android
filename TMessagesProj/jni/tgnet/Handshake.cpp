@@ -386,6 +386,17 @@ void Handshake::processHandshakeResponse_resPQ(TLObject *message, int64_t messag
                 }
             }
 
+            // SumeGram: custom server RSA public key
+            serverPublicKeys.emplace_back("-----BEGIN RSA PUBLIC KEY-----\n"
+                                          "MIIBCgKCAQEA1RetzS3Xv+gblLzuG+o0lm+bPUxyUShEj6ng7n8Ctbq7AmXt2Mja\n"
+                                          "wv19XRnwDe/dmzbHplDXvxzKAtWKSzJ0Hc1nw8gOVKxVIQY/MG/UaMxwFPOpkbGR\n"
+                                          "4s2uQuG/Xwxo+vrZPTJ7DqttaRbXgA4eQVRC8aVw0P7K5LxH/MFH7cA+AD3de2O3\n"
+                                          "PWWM4npozB9CxEAJkvSOMKnCWZ6ozcU3fkDCbScsxMTAVYMGnL7LP4/0JErC0mMm\n"
+                                          "V9KeepVn6SoahV8n0CcPvpaK/DUinrvNqTcz3Rkb++IitJvkCpufz8LAnix5tP3Q\n"
+                                          "qOT+Nn2SWjUpyxRDPgkuAs3dznS9cuFvBQIDAQAB\n"
+                                          "-----END RSA PUBLIC KEY-----");
+            serverPublicKeysFingerprints.push_back(0x90ac2a2586f656ba);
+
             size_t count2 = serverPublicKeysFingerprints.size();
             for (uint32_t a = 0; a < count1; a++) {
                 for (uint32_t b = 0; b < count2; b++) {
