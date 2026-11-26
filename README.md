@@ -1,9 +1,9 @@
-## Telegram messenger for Android
+## SumeGram messenger for Android
 
-[Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
-This repo contains the official source code for [Telegram App for Android](https://play.google.com/store/apps/details?id=org.telegram.messenger).
+SumeGram is a messaging app with a focus on speed and security. It's superfast, simple and free.
+This repo contains the source code of the SumeGram Android client, based on the [Telegram Android](https://github.com/DrKLO/Telegram) client and the [Telegram API](https://core.telegram.org/api).
 
-## Creating your Telegram Application
+## Creating your SumeGram Application
 
 We welcome all developers to use our API and source code to create applications on our platform.
 There are several things we require from **all developers** for the moment.
@@ -13,6 +13,10 @@ There are several things we require from **all developers** for the moment.
 3. Kindly **do not** use our standard logo (white paper plane in a blue circle) as your app's logo.
 3. Please study our [**security guidelines**](https://core.telegram.org/mtproto/security_guidelines) and take good care of your users' data and privacy.
 4. Please remember to publish **your** code too in order to comply with the licences.
+
+### About this fork
+
+All datacenters in this client point to the SumeGram server, the interface is rebranded to SumeGram and builds are signed with the SumeGram release key.
 
 ### API, Protocol documentation
 
@@ -26,20 +30,20 @@ MTproto protocol manuals: https://core.telegram.org/mtproto
 
 You will require Android Studio 2025.1.4, Android NDK 27.2.12479018 and Android SDK 36.
 
-1. Clone the Telegram source code with its submodules:
+1. Clone the SumeGram source code with its submodules:
    ```bash
-   git clone --recursive --shallow-submodules https://github.com/DrKLO/Telegram.git Telegram
+   git clone --recursive --shallow-submodules git@github.com:SandyTAP/Sumegram-Android.git SumeGram
    ```
-   In case you forgot the `--recursive` flag, change to the `Telegram` directory and run:
+   In case you forgot the `--recursive` flag, change to the `SumeGram` directory and run:
    ```bash
    git submodule init && git submodule update --init --recursive --depth=1
    ```
 2. Copy your release.keystore into TMessagesProj/config
 3. Fill out RELEASE_KEY_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_STORE_PASSWORD in gradle.properties to access your  release.keystore
-4.  Go to https://console.firebase.google.com/, create two android apps with application IDs org.telegram.messenger and org.telegram.messenger.beta, turn on firebase messaging and download google-services.json, which should be copied to the same folder as TMessagesProj.
+4.  Go to https://console.firebase.google.com/, create two android apps with application IDs com.sandydev.sumegram and com.sandydev.sumegram.beta, turn on firebase messaging and download google-services.json, which should be copied to the same folder as TMessagesProj.
 5. Open the project in the Studio (note that it should be opened, NOT imported).
 6. Fill out values in TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java – there’s a link for each of the variables showing where and which data to obtain.
-7. You are ready to compile Telegram.
+7. You are ready to compile SumeGram.
 
 ### Localization
 
