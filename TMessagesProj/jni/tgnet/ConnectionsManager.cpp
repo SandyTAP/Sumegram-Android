@@ -46,9 +46,23 @@ jmethodID jclass_ByteBuffer_allocateDirect = nullptr;
 static bool done = false;
 static constexpr int32_t MAX_CAPTCHA_CHECKS = 5;
 
-// SumeGram: single datacenter endpoint used for all DCs
-static const char *SUME_DC_IP = "2.27.98.189";
-static constexpr uint32_t SUME_DC_PORT = 2398;
+// SumeGram: single datacenter endpoint used for all DCs, kept obfuscated
+static const std::string &sumeDcIp() {
+    static const std::string result = [] {
+        constexpr uint8_t data[] = { 0x5F, 0x14, 0xF7, 0xA6, 0x00, 0x4E, 0x8C, 0x32, 0xD3, 0x67, 0x91 };
+        constexpr uint8_t key[] = { 0x6D, 0x3A, 0xC5, 0x91, 0x2E, 0x77, 0xB4, 0x1C, 0xE2, 0x5F, 0xA8 };
+        auto value = std::string(sizeof(data), 0);
+        for (size_t i = 0; i != sizeof(data); i++) {
+            value[i] = char(data[i] ^ key[i % sizeof(key)]);
+        }
+        return value;
+    }();
+    return result;
+}
+
+static uint32_t sumeDcPort() {
+    return uint32_t(0x0CFD) ^ uint32_t(0x5A3);
+}
 
 ConnectionsManager::ConnectionsManager(int32_t instance) {
     instanceNum = instance;
@@ -1850,7 +1864,7 @@ void ConnectionsManager::initDatacenters() {
             datacenters[dcId] = datacenter;
         }
         std::vector<TcpAddress> addresses;
-        addresses.emplace_back(SUME_DC_IP, SUME_DC_PORT, 0, "");
+        addresses.emplace_back(sumeDcIp(), sumeDcPort(), 0, "");
         datacenter->replaceAddresses(addresses, 0);
         std::vector<TcpAddress> empty;
         datacenter->replaceAddresses(empty, 1);
@@ -3417,8 +3431,8 @@ void ConnectionsManager::updateDcSettings(uint32_t dcNum, bool workaround, bool 
                     if (dcOption->ipv6 || dcOption->cdn) {
                         return;
                     }
-                    std::string endpointIp = SUME_DC_IP;
-                    uint32_t endpointPort = SUME_DC_PORT;
+                    std::string endpointIp = sumeDcIp();
+                    uint32_t endpointPort = sumeDcPort();
                     std::vector<TcpAddress> *addresses;
                     if (!isCdn) {
                         isCdn = dcOption->cdn;
