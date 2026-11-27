@@ -93,6 +93,8 @@ public class LinkManager {
     public boolean handle(Uri uri) {
         if (uri == null) return false;
 
+        uri = AndroidUtilities.normalizeSumeUri(uri);
+
         FileLog.d("link manager handle " + uri);
 
         final String scheme = uri.getScheme();

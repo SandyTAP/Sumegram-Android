@@ -1440,7 +1440,7 @@ public class AndroidUtilities {
             Linkify.addLinks(text, Linkify.PHONE_NUMBERS);
         }
         if ((mask & Linkify.WEB_URLS) != 0) {
-            gatherLinks(links, text, LinkifyPort.WEB_URL, new String[]{"http://", "https://", "tg://", "tonsite://"}, sUrlMatchFilter, internalOnly);
+            gatherLinks(links, text, LinkifyPort.WEB_URL, new String[]{"http://", "https://", "tg://", "sume://", "tonsite://"}, sUrlMatchFilter, internalOnly);
         }
         pruneOverlaps(links);
         if (links.size() == 0) {
@@ -6261,6 +6261,32 @@ public class AndroidUtilities {
             return null;
         }
         return getHostAuthority(uri.toString());
+    }
+
+    public static Uri normalizeSumeUri(Uri uri) {
+        if (uri == null) {
+            return null;
+        }
+        final String scheme = uri.getScheme();
+        if ("sume".equalsIgnoreCase(scheme)) {
+            final String value = uri.toString();
+            return Uri.parse("tg" + value.substring("sume".length()));
+        }
+        final String host = uri.getHost();
+        if (host != null) {
+            final String lowerHost = host.toLowerCase();
+            if ("sume.sandytap.ru".equals(lowerHost) || lowerHost.endsWith(".sume.sandytap.ru")) {
+                String path = uri.getPath();
+                if (path == null) {
+                    path = "";
+                } else if (!path.startsWith("/")) {
+                    path = "/" + path;
+                }
+                final String query = uri.getQuery() == null ? "" : "?" + uri.getQuery();
+                return Uri.parse("https://t.me" + path + query);
+            }
+        }
+        return uri;
     }
 
     public static String getHostAuthority(Uri uri, boolean removeWWW) {

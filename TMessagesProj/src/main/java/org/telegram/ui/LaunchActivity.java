@@ -1930,7 +1930,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         Toast.makeText(this, LocaleController.getString(R.string.UnsupportedContent), Toast.LENGTH_SHORT).show();
                     }
                 } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-                    Uri data = intent.getData();
+                    Uri data = AndroidUtilities.normalizeSumeUri(intent.getData());
 
                     final LinkManager linkManager = new LinkManager(this, intentAccount[0], progress, openedTelegram);
                     if (linkManager.handle(data)) {
