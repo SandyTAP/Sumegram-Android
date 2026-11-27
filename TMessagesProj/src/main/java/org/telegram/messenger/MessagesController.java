@@ -1592,7 +1592,7 @@ public class MessagesController extends BaseController implements NotificationCe
         callRingTimeout = mainPreferences.getInt("callRingTimeout", 90000);
         callConnectTimeout = mainPreferences.getInt("callConnectTimeout", 30000);
         callPacketTimeout = mainPreferences.getInt("callPacketTimeout", 10000);
-        updateCheckDelay = mainPreferences.getInt("updateCheckDelay", 24 * 60 * 60);
+        updateCheckDelay = 60 * 60;
         maxFolderPinnedDialogsCountDefault = mainPreferences.getInt("maxFolderPinnedDialogsCountDefault", 100);
         maxFolderPinnedDialogsCountPremium = mainPreferences.getInt("maxFolderPinnedDialogsCountPremium", 100);
         maxMessageLength = mainPreferences.getInt("maxMessageLength", 4096);
